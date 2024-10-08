@@ -1,18 +1,85 @@
-// components/Chat.js
 "use client";
+
 import React, { useState, useRef, useEffect } from "react";
-import { Send } from "lucide-react";
-import CodeBlock from "./codeblock";
+import {
+    Send,
+    X,
+    Copy,
+    Check,
+    ChevronDown,
+    ChevronUp,
+    ExternalLink,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import hljs from "highlight.js";
+import "highlight.js/styles/atom-one-dark.css";
+
+const CodeBlock = ({
+    code,
+    language = "javascript",
+    showLineNumbers = true,
+    className = "",
+    isMinimized = true,
+    onToggle,
+}) => {
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        hljs.highlightAll();
+    }, [code, onToggle]);
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <div className={cn("relative mt-2 rounded-md border", className)}>
+            <div className="flex items-center justify-between px-4 py-2 border-b">
+                {/* <Button variant="ghost" size="icon" onClick={onToggle}>
+                    {isMinimized ? (
+                        <ChevronDown className="h-4 w-4" />
+                    ) : (
+                        <ChevronUp className="h-4 w-4" />
+                    )}
+                </Button> */}
+                <Button variant="ghost" size="icon" onClick={copyToClipboard}>
+                    {copied ? (
+                        <Check className="h-4 w-4" />
+                    ) : (
+                        <Copy className="h-4 w-4" />
+                    )}
+                </Button>
+            </div>
+            {!isMinimized && (
+                <pre className="p-4 overflow-x-auto">
+                    <code className={`language-javascript`}>{code}</code>
+                </pre>
+            )}
+        </div>
+    );
+};
 
 export default function Chat() {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [codeArtifact, setCodeArtifact] = useState(null);
+    const [isArtifactOpen, setIsArtifactOpen] = useState(false);
+    const [isArtifactMinimized, setIsArtifactMinimized] = useState(false);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
+
+    useEffect(() => {
+        hljs.highlightAll();
+    }, [codeArtifact, setCodeArtifact]);
 
     useEffect(scrollToBottom, [messages]);
 
@@ -54,6 +121,15 @@ export default function Chat() {
                     ...prevMessages.slice(0, -1),
                     { ...assistantMessage },
                 ]);
+
+                const codeMatch =
+                    assistantMessage.content.match(/```[\s\S]*?```/);
+                if (codeMatch && !codeArtifact) {
+                    const code = codeMatch[0].slice(3, -3).trim();
+                    const codeWithoutFirstWord = code.replace(/^\s*\S+\s*/, "");
+                    setCodeArtifact(codeWithoutFirstWord);
+                    setIsArtifactOpen(true);
+                }
             }
         } catch (error) {
             console.error("Error:", error);
@@ -65,12 +141,30 @@ export default function Chat() {
     const renderMessageContent = (content) => {
         const parts = content.split(/(```[\s\S]*?```)/);
         return parts.map((part, index) => {
-            if (part.startsWith("```") && part.endsWith("```")) {
-                //remove the first word after the ```
-
+            if (part.startsWith("```") || part.endsWith("```")) {
                 const code = part.slice(3, -3).trim();
                 const codeWithoutFirstWord = code.replace(/^\s*\S+\s*/, "");
-                return <CodeBlock key={index} code={codeWithoutFirstWord} />;
+                return (
+                    <div key={index}>
+                        <CodeBlock
+                            code={codeWithoutFirstWord}
+                            isMinimized={true}
+                            onToggle={() => {}}
+                        />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => {
+                                setCodeArtifact(codeWithoutFirstWord);
+                                setIsArtifactOpen(true);
+                                setIsArtifactMinimized(false);
+                            }}>
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Open in artifact
+                        </Button>
+                    </div>
+                );
             } else {
                 return part
                     .split(/(\*\*.*?\*\*|`.*?`|\n)/)
@@ -91,7 +185,7 @@ export default function Chat() {
                             return (
                                 <code
                                     key={subIndex}
-                                    className="bg-gray-700 text-white px-1 rounded">
+                                    className="bg-gray-200 dark:bg-gray-800 px-1 rounded">
                                     {subPart.slice(1, -1)}
                                 </code>
                             );
@@ -104,48 +198,88 @@ export default function Chat() {
             }
         });
     };
+
     return (
-        <div className="flex justify-center items-center h-screen   bg-zinc-900 ">
-            <div className="flex flex-col h-screen  w-3/5 overflow-hidden  ">
-                <div className="flex-1 overflow-y-auto p-4 m-1 space-y-4 scrollbar-hide ">
-                    {messages.map((message, index) => (
-                        <div
-                            key={index}
-                            className={`flex ${
-                                message.role === "user"
-                                    ? "justify-end"
-                                    : "justify-start"
-                            }`}>
+        <div className="flex justify-center h-screen bg-background">
+            <div
+                className={cn(
+                    "flex transition-all duration-300 ease-in-out",
+                    isArtifactOpen ? "w-full" : "w-1/2"
+                )}>
+                <div
+                    className={cn(
+                        "flex flex-col",
+                        isArtifactOpen ? "w-1/2" : "w-full"
+                    )}>
+                    <ScrollArea className="flex-1 p-4 space-y-4">
+                        {messages.map((message, index) => (
                             <div
-                                className={`max-w-2xl p-4 rounded-lg ${
+                                key={index}
+                                className={cn(
+                                    "flex",
                                     message.role === "user"
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-gray-800 text-gray-300"
-                                }`}>
-                                {renderMessageContent(message.content)}
+                                        ? "justify-end"
+                                        : "justify-start"
+                                )}>
+                                <div
+                                    className={cn(
+                                        "max-w-[80%] p-4 rounded-lg",
+                                        message.role === "user"
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted"
+                                    )}>
+                                    {renderMessageContent(message.content)}
+                                </div>
                             </div>
+                        ))}
+                        <div ref={messagesEndRef} />
+                    </ScrollArea>
+                    <form onSubmit={handleSubmit} className="p-4 border-t">
+                        <div className="flex items-center space-x-2">
+                            <Input
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                className="flex-1"
+                                placeholder="Type your message..."
+                                disabled={isLoading}
+                            />
+                            <Button type="submit" disabled={isLoading}>
+                                <Send className="h-4 w-4" />
+                            </Button>
                         </div>
-                    ))}
-                    <div ref={messagesEndRef} />
+                    </form>
                 </div>
-                <form onSubmit={handleSubmit} className="p-4  w-full">
-                    <div className="flex items-center space-x-2 rounded-lg">
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            className="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-white"
-                            placeholder="Type your message..."
-                            disabled={isLoading}
-                        />
-                        <button
-                            type="submit"
-                            className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            disabled={isLoading}>
-                            <Send size={20} />
-                        </button>
+                {isArtifactOpen && (
+                    <div className="w-1/2 border-l flex flex-col">
+                        <div className="flex justify-between items-center p-4 border-b">
+                            <h3 className="text-lg font-semibold">
+                                Code Artifact
+                            </h3>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setIsArtifactOpen(false)}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <ScrollArea className="flex-1 p-4">
+                            {codeArtifact && (
+                                <CodeBlock
+                                    code={codeArtifact}
+                                    showLineNumbers={true}
+                                    className="mt-0"
+                                    isMinimized={isArtifactMinimized}
+                                    onToggle={() =>
+                                        setIsArtifactMinimized(
+                                            !isArtifactMinimized
+                                        )
+                                    }
+                                />
+                            )}
+                        </ScrollArea>
                     </div>
-                </form>
+                )}
             </div>
         </div>
     );
