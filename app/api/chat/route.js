@@ -22,12 +22,10 @@ export async function GET(request) {
 			throw new Error("Network response was not ok");
 		}
 
-		// Create a TransformStream to chunk the response
 		const stream = new TransformStream();
 		const writer = stream.writable.getWriter();
 		const reader = response.body.getReader();
 
-		// Read the response body and write it to the stream
 		const pump = async () => {
 			while (true) {
 				const { done, value } = await reader.read();
@@ -39,7 +37,6 @@ export async function GET(request) {
 
 		pump();
 
-		// Return the stream as the response
 		return new NextResponse(stream.readable, {
 			headers: {
 				"Content-Type": "text/plain",

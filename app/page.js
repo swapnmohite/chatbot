@@ -1,44 +1,14 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import {Send, X, Copy, Check, ChevronDown, ChevronUp, ExternalLink, Eye, Moon, Sun, Command, Trash} from "lucide-react";
-import { useTheme } from "next-themes";
+import {Send, X, Copy, Check, ExternalLink, Eye} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem,} from "@/components/ui/command";
 import hljs from "highlight.js";
 import "highlight.js/styles/github-dark.css";
-
-const ModeToggle = () => {
-    const { theme, setTheme } = useTheme();
-
-    return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() =>
-                            setTheme(theme === "dark" ? "light" : "dark")
-                        }
-                        className="relative">
-                        <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                        <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                        <span className="sr-only">Toggle theme</span>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Toggle theme</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-    );
-};
 
 const CodeBlock = ({
     code,
@@ -165,7 +135,6 @@ export default function Chat() {
     const [artifactLanguage, setArtifactLanguage] = useState("javascript");
     const [isArtifactOpen, setIsArtifactOpen] = useState(false);
     const [isArtifactMinimized, setIsArtifactMinimized] = useState(false);
-    const [isCommandOpen, setIsCommandOpen] = useState(false);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -175,8 +144,6 @@ export default function Chat() {
     useEffect(() => {
         hljs.highlightAll();
     }, [codeArtifact]);
-
-    // useEffect(scrollToBottom, [messages]);
 
     useEffect(() => {
         const down = (e) => {
@@ -316,58 +283,16 @@ export default function Chat() {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-background">
-            <header className="flex justify-between items-center p-4 border-b">
-                <h1 className="text-2xl font-bold">Chat Interface</h1>
-                <div className="flex items-center space-x-2">
-                    <ModeToggle />
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className="ml-auto">
-                                <Command className="mr-2 h-4 w-4" />
-                                Command Menu
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                            <CommandDialog
-                                open={isCommandOpen}
-                                onOpenChange={setIsCommandOpen}>
-                                <CommandInput placeholder="Type a command or search..." />
-                                <CommandList>
-                                    <CommandEmpty>
-                                        No results found.
-                                    </CommandEmpty>
-                                    <CommandGroup heading="Actions">
-                                        <CommandItem
-                                            onSelect={() =>
-                                                setIsArtifactOpen(true)
-                                            }>
-                                            <ExternalLink className="mr-2 h-4 w-4" />
-                                            <span>Open Code Artifact</span>
-                                        </CommandItem>
-                                        <CommandItem
-                                            onSelect={() => setMessages([])}>
-                                            <Trash className="mr-2 h-4 w-4" />
-                                            <span>Clear Chat</span>
-                                        </CommandItem>
-                                    </CommandGroup>
-                                </CommandList>
-                            </CommandDialog>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            </header>
+        <div className="flex flex-col bg-background">
             <div
                 className={cn(
-                    "flex flex-1 transition-all duration-300 ease-in-out justify-center ",
-                    isArtifactOpen ? "w-full" : "w-1/2 mx-auto"
+                    "flex flex-1 transition-all duration-300 ease-in-out",
+                    isArtifactOpen ? "w-full" : "w-full max-w-3xl mx-auto"
                 )}>
                 <div
                     className={cn(
-                        "flex flex-col",
-                        isArtifactOpen ? "w-1/2" : "w-full"
+                        "flex flex-col w-full",
+                        isArtifactOpen ? "max-w-[50%]" : "max-w-full"
                     )}>
                     <ScrollArea className="flex-1 p-4 space-y-4">
                         {messages.map((message, index) => (
@@ -425,7 +350,7 @@ export default function Chat() {
                     </form>
                 </div>
                 {isArtifactOpen && (
-                    <div className="w-1/2 border-l flex flex-col">
+                    <div className="w-[50%] border-l flex flex-col">
                         <div className="flex justify-between items-center p-4 border-b">
                             <h3 className="text-lg font-semibold">
                                 Code Artifact ({artifactLanguage})
