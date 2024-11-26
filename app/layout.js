@@ -1,4 +1,4 @@
-import localFont from "next/font/local";
+
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import {
@@ -8,17 +8,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+import QueryProvider from "@/components/query-provider";
 
 export const metadata = {
   title: "Create Next App",
@@ -29,26 +19,26 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <SidebarProvider>
-            <div className="flex h-screen">
-              <Sidebar collapsible="icon">
+        className={`antialiased`}>
+        <QueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange>
+            <SidebarProvider>
+
+              <Sidebar className="w-64 flex-shrink-0">
                 <AppSidebar />
               </Sidebar>
-              <SidebarInset className="flex-none overflow-hidden">
+              <SidebarInset className="flex-grow overflow-hidden">
                 <SidebarTrigger />
-                {children}
               </SidebarInset>
-            </div>
-          </SidebarProvider>
-        </ThemeProvider>
+              {children}
+
+            </SidebarProvider>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );
