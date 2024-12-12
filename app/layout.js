@@ -1,13 +1,4 @@
-
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarInset,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
 import QueryProvider from "@/components/query-provider";
 
 export const metadata = {
@@ -21,23 +12,7 @@ export default function RootLayout({ children }) {
       <body
         className={`antialiased`}>
         <QueryProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange>
-            <SidebarProvider>
-
-              <Sidebar className="w-64 flex-shrink-0">
-                <AppSidebar />
-              </Sidebar>
-              <SidebarInset className="flex-grow overflow-hidden">
-                <SidebarTrigger />
-              </SidebarInset>
-              {children}
-
-            </SidebarProvider>
-          </ThemeProvider>
+          {children}
         </QueryProvider>
       </body>
     </html>
